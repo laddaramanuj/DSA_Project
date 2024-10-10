@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include "main.h"
 
 // Function to handle the file upload button click
 void on_file_upload_clicked(GtkWidget *widget, gpointer user_data) {
