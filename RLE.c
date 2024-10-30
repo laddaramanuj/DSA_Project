@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 void compressUsingRLE(const char* inputFile, const char* outputFile) {
     FILE *in = fopen(inputFile, "r");
     FILE *out = fopen(outputFile, "w");
@@ -40,22 +42,48 @@ void compressUsingRLE(const char* inputFile, const char* outputFile) {
     fclose(in);
     fclose(out);
 }
-int main() {
-    const char* inputFile = "msg.txt";       // Input file name
-    const char* outputFile = "output.txt";   // Output file name
-
-    // Call the RLE compression function with input and output file names
-    compressUsingRLE(inputFile, outputFile);
-    return 0;
-}
-/*
-int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <input file> <output file>\n", argv[0]);
-        return 1;
+void decompressUsingRLE( char* inputFile, char* outputFile) {
+    FILE *in = fopen(inputFile, "r");
+    FILE *out = fopen(outputFile, "w");
+    if (in == NULL || out == NULL) {
+        perror("Error opening file");
+        exit(1);
     }
 
-    compressUsingRLE(argv[1], argv[2]);
+    while(1) {
+        int head = fgetc(in);
+        if (head == EOF) break;
+
+        int nextChar = fgetc(in);
+        if (nextChar == EOF) {
+            fputc(head, out);
+            break;
+        }
+
+        if (isdigit(nextChar)) {
+            ungetc(nextChar, in);
+            int count;
+            fscanf(in, "%d", &count); 
+            for (int i = 0; i < count; i++) {
+                fputc(head, out);
+            }
+        } else {
+            fputc(head, out);
+            ungetc(nextChar, in); 
+        }
+    }
+
+    fclose(in);
+    fclose(out);
+}
+int main(){
+    const char* inputFile = "sample.txt";       // Input file name
+    const char* outputFile = "output.txt";   // Output file name
+    const char* decompressedfile = "decompress.txt";
+    // Call the RLE compression function with input and output file names
+    compressUsingRLE(inputFile, outputFile);
+    printf("Compression using RLE completed successfully\n");
+    decompressUsingRLE(outputFile, decompressedfile);
+    printf("Decompression using RLE completed successfully\n");
     return 0;
 }
-*/
