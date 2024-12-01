@@ -8,8 +8,13 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
+<<<<<<< HEAD
       "cwd": "c:/Users/ladda/OneDrive - College of Engineering Pune(An autonomous Institute of Govt. of Maharashtra)/Desktop/DSA Mini Project",
       "program": "c:/Users/ladda/OneDrive - College of Engineering Pune(An autonomous Institute of Govt. of Maharashtra)/Desktop/DSA Mini Project/build/Debug/outDebug",
+=======
+      "cwd": "c:/Users/ladda/Development/DSA",
+      "program": "c:/Users/ladda/Development/DSA/build/Debug/outDebug",
+>>>>>>> 38f8a40666c3064a153e623a4a88617fbac1bdf5
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

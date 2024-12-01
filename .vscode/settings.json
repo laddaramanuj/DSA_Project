@@ -55,5 +55,12 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
+<<<<<<< HEAD
   "C_Cpp_Runner.msvcSecureNoWarnings": false
+=======
+  "C_Cpp_Runner.msvcSecureNoWarnings": false,
+  "files.associations": {
+    "logic.h": "c"
+  }
+>>>>>>> 38f8a40666c3064a153e623a4a88617fbac1bdf5
 }
