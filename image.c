@@ -3,7 +3,7 @@
 int main() {
     MinHeap *heap = createMinHeap(256);
     int i,j,r,c;
-    char filename[] = "yon0x227.bmp";
+    char filename[] = "color1.bmp";
     int offset,hbytes,width,height;
     long bmpsize=0,bmpdataoff=0,bpp=0;
     unsigned char **image;
