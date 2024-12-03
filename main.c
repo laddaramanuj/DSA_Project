@@ -5,13 +5,13 @@
 #include "RLE.h"
 int main() {
     const char *inputFile = "data.txt";
-    const char *outputFile = "compress.txt";
+    const char *compressedFile = "compress.txt";
     const char *decompressedFile = "decompress.txt";
 
-    compressUsingRLE(inputFile, outputFile);
+    compressUsingRLE(inputFile, compressedFile);
     printf("Compression using RLE completed successfully\n");
 
-    decompressUsingRLE(outputFile, decompressedFile);
+    decompressUsingRLE(compressedFile, decompressedFile);
     printf("Decompression using RLE completed successfully\n");
 
     return 0;
