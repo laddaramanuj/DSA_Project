@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
     char *command = argv[1];
     char *filename = argv[2];
 
+    clock_t start = clock();
+
     if (strcmp(command, "c1") == 0) {
         //this is to handle compression using RLE
         //it will take file to be compressed
@@ -75,6 +77,10 @@ int main(int argc, char *argv[]) {
         printf("  d3: Decompress image using Huffman\n");
         return 1;
     }
+
+    clock_t end = clock();
+    double time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Time taken: %.2f seconds\n", time_taken);
 
     return 0;
 }

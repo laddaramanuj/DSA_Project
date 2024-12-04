@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
 
 void compressUsingRLE(const char *inputFile, const char *outputFile);
