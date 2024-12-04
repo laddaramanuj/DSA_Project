@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-#include "RLE.h"
+#include "main.h"
+
 void compressUsingRLE(const char *inputFile, const char *outputFile) {
     FILE *in = fopen(inputFile, "r");
     FILE *out = fopen(outputFile, "w");

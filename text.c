@@ -1,76 +1,105 @@
 #include "logic.h"
 //run command -> 
 //gcc text.c minHeap.c logic.c
-int main() {
+
+void compressUsingHauffText(char *inputFile, char *outputFile) {
+
     MinHeap *heap = createMinHeap(256);
-    int file = open("msg.txt", O_RDONLY);
-    if (file == -1) {
+
+    FILE* file = fopen(inputFile, "r");
+    if (file == NULL) {
         perror("Error opening file");
-        return 1;
+        return;
     }
+
     char buffer;
     int freq[256] = {0};
     int i = 0;
     int total = 0;
-    while(read(file, &buffer, 1) > 0) {
+    
+    while (fread(&buffer, 1, 1, file) > 0) {
         freq[(unsigned char)buffer]++;
         //printf("'%c'", buffer);
         total++;
     }
     printf("\n");
-    printf("Total : %d\n", total);
+
+    printf("Count of char in text file : %d\n", total);
+
 
     int count = insertInMeanHeap(heap, freq);
 
     i = 0;
-    while(i < 256) {
-        if(freq[i] > 0) {
+    while (i < 256) {
+        if (freq[i] > 0) {
             //printf("'%c'(%d) : %d\n", i, i, freq[i]);
         }
         i++;
     }
-
-    //printf("above built\n");
+    
     node* root = buildHuffmanTree(heap);
     
-
-    int fd2 = open("compressedText.bin", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd2 == -1) {
+    FILE* fd2 = fopen(outputFile, "wb");
+    if (fd2 == NULL) {
         perror("Error opening output file");
-        return 1;
+        return;
     }
-    
-    
-    printf("count : %d\n", count);
-    write(fd2, &count, sizeof(int));
+
+    //writing count of total char 
+    //it will be helpful in decompression
+    fwrite(&total, sizeof(int), 1, fd2); 
+
+    printf("count of unique char in file : %d\n", count);
+    //writing count of unique char in compressed file
+    //it will be helpful in rebuilting hauffman tree
+    fwrite(&count, sizeof(int), 1, fd2); 
+
+
     int t[16];
+    //function to print each char and its lenth of its hauffman code, decimal equivalent of code
+    //it will be helpful in rebuilting hauffman tree
     printCodesIntoFile(fd2, root, t, 0);
     
-    lseek(file, 0, SEEK_SET);
+    //moving cursur to start to compress char one by one
+    fseek(file, 0, SEEK_SET);
+
     unsigned char a = 0;
     compressFile(file, fd2, a);
-
-    lseek(fd2, 0, SEEK_SET);
-    fd2 = open("compressedText.bin", O_RDONLY);
-    if (fd2 == -1) {
-        perror("Error opening compressed file for reading");
-        return 1;
-    }
     
-    int fd3 = open("DecompressedText.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd3 == -1) {
-        perror("Error opening output file");
-        return 1;
-    }
-    
-    int n1;
-    read(fd2, &n1, sizeof(int));
-    ReBuildHuffmanTree(fd2, n1);
-    printf("i have built tree\n");
-    decompressFile(fd2, fd3, total);
-    printf("i have decompressed\n");
-
-    closeAllFiles(file, fd2, fd3);
-    freeData(NULL, 0, heap);
-    return 0;
+    fclose(fd2); 
+    fclose(file);
+    freeHeap(heap);
 }
+
+void decompressingHauffText(char *inputFile, char *outputFile) {
+    FILE* fd2 = fopen(inputFile, "rb");
+    if (fd2 == NULL) {
+        perror("Error opening compressed file for reading");
+        return;
+    }
+    
+    FILE* fd3 = fopen(outputFile, "w");
+    if (fd3 == NULL) {
+        perror("Error opening output file");
+        fclose(fd2);
+        return;
+    }
+
+    int n1, total;
+    //reading how many total char are there
+    fread(&total, sizeof(int), 1, fd2); 
+
+    //reading how many unique char are there
+    //then for each there is char, binary code len, binary code decimal equivalent
+    //which will be read in ReBuildHuffmanTree
+    fread(&n1, sizeof(int), 1, fd2); 
+    ReBuildHuffmanTree(fd2, n1);
+
+
+    decompressFile(fd2, fd3, total);
+    
+    fclose(fd2);
+    fclose(fd3);
+    freeHuffmanTree(tree);//tree is diclared globally
+}
+

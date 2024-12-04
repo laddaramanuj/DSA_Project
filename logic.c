@@ -1,5 +1,6 @@
 #include "logic.h"
 
+
 int k = 0;
 code *front = NULL, *rear = NULL;
 
@@ -16,14 +17,14 @@ int insertInMeanHeap(MinHeap* h, int* freq) {
     }
     i = 0;
     while(i < count) {
-        printf("%d) %d : %d\n", i, (unsigned char)h->array[i]->ch, h->array[i]->freq);
+        //printf("%d) %d : %d\n", i, (unsigned char)h->array[i]->ch, h->array[i]->freq);
         i++;
     }
     printf("capacity : %d, size :  %d\n", h->capacity, h->size);
     return count;
 }
 
-//no chage
+
 // Function to build Huffman Tree
 node* buildHuffmanTree(MinHeap* h){
     node *l, *r, *top;
@@ -35,7 +36,6 @@ node* buildHuffmanTree(MinHeap* h){
         top->r = r;
         insertMinHeap(h, top);
     }
-    //printf("i am out of loop in built\n");
     return extractMin(h);
 }
 
@@ -56,7 +56,7 @@ int convertBinaryToDecimal(int arr[], int n) {
 }
 
 // Function to print codes into file
-void printCodesIntoFile(int fd2, node* root,int t[], int top ) {
+void printCodesIntoFile(FILE* fd2, node* root,int t[], int top ) {
     int i;
     if (root->l) {
         t[top] = 0;
@@ -74,25 +74,29 @@ void printCodesIntoFile(int fd2, node* root,int t[], int top ) {
         data->p = NULL;
         data->k = root->ch;
         //tree->g = root->character;
-        write(fd2, &root->ch, sizeof(char));
-        printf("code for '%d' : ", (unsigned char)data->k);
+        //write(fd2, &root->ch, sizeof(char));
+        fwrite(&root->ch, sizeof(char), 1, fd2);
+        //printf("code for '%d' : ", (unsigned char)data->k);
         for (i = 0; i < top; i++) {
             data->code_arr[i] = t[i];
-            printf("%d ", t[i]);
+            //printf("%d ", t[i]);
         }
-        printf("\n");
+        //printf("\n");
+        //printf("reached here %d\n", (unsigned char)data->k);
         data->l = top;
         //char len_str[16]; // Buffer for length
         //sprintf(len_str, "%d", top); // Format length as string
         //write(fd2, len_str, strlen(len_str)); // Write length
-        write(fd2, &data->l, sizeof(int)); // Write length
+        //write(fd2, &data->l, sizeof(int)); // Write length
+        fwrite(&data->l, sizeof(int), 1, fd2);
 
         // Convert the binary code to decimal and write it
         data->d = convertBinaryToDecimal(t, top); // Compute decimal value from binary
         //char dec_str[16]; // Buffer for decimal
         //sprintf(dec_str, "%d", data->d); // Format decimal as string
         //write(fd2, dec_str, strlen(dec_str)); // Write decimal value
-        write(fd2, &data->d, sizeof(int)); // Write decimal value
+        //write(fd2, &data->d, sizeof(int)); // Write decimal value
+        fwrite(&data->d, sizeof(int), 1, fd2);
         if (k == 0) {
             front = rear = data;
             k++;
@@ -114,29 +118,30 @@ void freeCodeList(code *head) {
     }
 }
 
-void writeHeader(int fd2, int file, int count) {
-    write(fd2, &count, 2);
+void writeHeader(FILE* fd2, FILE* file, int count) {
+    //write(fd2, &count, 2);
+    fwrite(&count, 2, 1, fd2);
     int i = count;
     char ch;
     while(i--) {
-        int bytesRead = read(file, &ch, 1);
+        int bytesRead = fread(&ch, 1, 1, file);
         if(bytesRead == -1) {
             return; 
         }else if (bytesRead == 0) {
             printf("end of file\n");
             return;
         }
-        if(write(fd2, &ch, 1) == -1) {
+        if(fwrite(&ch, 1, 1, fd2) != 1) {
             return; 
         }
     }
 }
 
 // Function to compress file
-void compressFile(int fd1, int fd2, unsigned char a) {
+void compressFile(FILE* fd1, FILE* fd2, unsigned char a) {
     char n;
     int h = 0, i;
-    while (read(fd1, &n, sizeof(char)) != 0) {
+    while (fread(&n, sizeof(char), 1, fd1) != 0) {
         rear = front;
         while (rear->k != n && rear->p != NULL) {
             rear = rear->p;
@@ -162,7 +167,8 @@ void compressFile(int fd1, int fd2, unsigned char a) {
                     else {
                         h = 0;
                     }
-                    write(fd2, &a, sizeof(char));
+                    //write(fd2, &a, sizeof(char));
+                    fwrite(&a, sizeof(char), 1, fd2);
                     a = 0;
                 }
             }
@@ -171,7 +177,9 @@ void compressFile(int fd1, int fd2, unsigned char a) {
     for (i = 0; i < 7 - h; i++) {
         a = a << 1;
     }
-    write(fd2, &a, sizeof(char));
+    //write(fd2, &a, sizeof(char));
+    fwrite(&a, sizeof(char), 1, fd2);
+    freeCodeList(front);//front is diclared globally
 }
 
 void convertDecimalToBinary(int bin[], int decimal, int length) {
@@ -183,14 +191,14 @@ void convertDecimalToBinary(int bin[], int decimal, int length) {
     }
 }
 
-void ExtractCodesFromFile(int fd1) {
-    read(fd1, &t->g, sizeof(char));
-    read(fd1, &t->len, sizeof(int));
-    read(fd1, &t->dec, sizeof(int));
+void ExtractCodesFromFile(FILE* fd1) {
+    fread(&t->g, sizeof(char), 1, fd1); // Replace read with fread
+    fread(&t->len, sizeof(int), 1, fd1); // Replace read with fread
+    fread(&t->dec, sizeof(int), 1, fd1); // Replace read with fread
 }
 
 // Function to rebuild the Huffman tree
-void ReBuildHuffmanTree(int fd1, int size) {
+void ReBuildHuffmanTree(FILE* fd1, int size) {
     int i = 0, j, k;
     int l = 0;
     tree = (Tree*)malloc(sizeof(Tree));
@@ -200,10 +208,13 @@ void ReBuildHuffmanTree(int fd1, int size) {
     t = (Tree*)malloc(sizeof(Tree));
     t->f = NULL;
     t->r = NULL;
+    int m = 0;
     for(k = 0; k < size; k++) {
+        //printf("%d times in for loop\n", m);
+        m++;
         tree_temp = tree;
         ExtractCodesFromFile(fd1);
-        //printf("'%c' : %d\n", t->g, t->dec);
+        //printf("in rebuilt '%c' : %d, %d\ncode : ", t->g, t->dec, t->len);
         int bin[MAX], bin_con[MAX];
         for (i = 0; i < MAX; i++) {
             bin[i] = bin_con[i] = 0;
@@ -212,21 +223,17 @@ void ReBuildHuffmanTree(int fd1, int size) {
         convertDecimalToBinary(bin, t->dec, t->len);
         for (i = 0; i < t->len; i++) {
             bin_con[i] = bin[i];
+            //printf("%d", bin_con[i]);
         }
+        //printf("\n");
         
         for (j = 0; j < t->len; j++) {
             if (bin_con[j] == 0) {
                 if (tree_temp->f == NULL) {
                     tree_temp->f
                         = (Tree*)malloc(sizeof(Tree));
-                    if(l++ == 0) {
-                        if(tree_temp->f->f == NULL) {
-                            printf("How is it possible!!\n");
-                            printf("char = '%c' &  len = %d\n", tree_temp->f->g, tree_temp->f->len);
-                        }
-                            
-                    }
-                    
+                    tree_temp->f->f = NULL;
+                    tree_temp->f->r = NULL;
                 }
                 tree_temp = tree_temp->f;
             }
@@ -234,6 +241,8 @@ void ReBuildHuffmanTree(int fd1, int size) {
                 if (tree_temp->r == NULL) {
                     tree_temp->r
                         = (Tree*)malloc(sizeof(Tree));
+                    tree_temp->r->f = NULL;
+                    tree_temp->r->r = NULL;
                 }
                 tree_temp = tree_temp->r;
             }
@@ -241,8 +250,9 @@ void ReBuildHuffmanTree(int fd1, int size) {
         tree_temp->g = t->g;
         tree_temp->len = t->len;
         tree_temp->dec = t->dec;
-        tree_temp->f = NULL;
-        tree_temp->r = NULL;
+        //printf("in tree leaf node '%c' : %d, %d\n", tree_temp->g, tree_temp->dec, tree_temp->len);
+        //tree_temp->f = NULL;
+        //tree_temp->r = NULL;
         tree_temp = tree;
     }
 }
@@ -252,10 +262,10 @@ int isroot(Tree* node){
     return (node->f == NULL && node->r == NULL);
 }
 
-void decompressFile(int fd1, int fd2, int f) {
+void decompressFile(FILE* fd1, FILE* fd2, int f) {
     int inp[8], i, k = 0;
     unsigned char p;
-    read(fd1, &p, sizeof(char));
+    fread(&p, sizeof(char), 1, fd1);
     convertDecimalToBinary(inp, p, 8);
     tree_temp = tree;
     for (i = 0; i < 8 && k < f; i++) {
@@ -275,7 +285,7 @@ void decompressFile(int fd1, int fd2, int f) {
                 if (inp[i] == 1) {
                     tree_temp = tree_temp->r;
                 }
-                if (read(fd1, &p, sizeof(char)) != 0) {
+                if (fread(&p, sizeof(char), 1, fd1) != 0) {
                     convertDecimalToBinary(inp, p, 8);
                     i = -1;
                 }
@@ -286,7 +296,9 @@ void decompressFile(int fd1, int fd2, int f) {
         }
         else {
             k++;
-            write(fd2, &tree_temp->g, sizeof(char));
+            //write(fd2, &tree_temp->g, sizeof(char));
+            fwrite(&tree_temp->g, sizeof(char), 1, fd2);
+            //printf("Decompressed character: '%c' (ASCII: %d)\n", tree_temp->g, tree_temp->g);
             //printf("'%c'\n", tree_temp->g);
             tree_temp = tree;
             i--;
@@ -294,90 +306,48 @@ void decompressFile(int fd1, int fd2, int f) {
     }
 }
 
-void writingHeader(int fd3, int fd2) {
+void writingHeader(FILE* fd3, FILE* fd2) {
     int count;
+    //printf("%d\n", sizeof(short));
     char ch;
-    read(fd2, &count, 2);
-    printf("count = %d\n", count);
+    //read(fd2, &count, 2);
+    int bytesRead = fread(&count, sizeof(short), 1, fd2);
+    if (bytesRead != 1) {
+        printf("Error reading count or unexpected EOF\n");
+        return;
+    }
+    printf("count : %d\n", count);
     while(count--) {
-        int bytesRead = read(fd2, &ch, 1);
-        if(bytesRead == -1) {
-            return; 
+        //printf("%d ", count);
+        int bytesRead = fread(&ch, sizeof(char), 1, fd2);
+        //printf("reached here\n");
+        if (bytesRead != 1) {
+            printf("Error reading count or unexpected EOF\n");
+            return;
         }else if (bytesRead == 0) {
             printf("end of file\n");
             return;
         }
-        if(write(fd3, &ch, 1) == -1) {
-            return; 
+        if (fwrite(&ch, sizeof(char), 1, fd3) != 1) {
+            printf("Error writing to fd3\n");
+            return;
         }
-    }
-}
-
-void decompressFileGreyScale(int fd1, int fd2, int f) {
-    int inp[8], i, k = 0;
-    unsigned char p;
-    read(fd1, &p, sizeof(char));
-    convertDecimalToBinary(inp, p, 8);
-    tree_temp = tree;
-    for (i = 0; i < 8 && k < f; i++) {
-        if(!isroot(tree_temp)) {
-            if (i != 7) {
-                if (inp[i] == 0) {
-                    tree_temp = tree_temp->f;
-                }
-                if (inp[i] == 1) {
-                    tree_temp = tree_temp->r;
-                }
-            }
-            else {
-                if (inp[i] == 0) {
-                    tree_temp = tree_temp->f;
-                }
-                if (inp[i] == 1) {
-                    tree_temp = tree_temp->r;
-                }
-                if (read(fd1, &p, sizeof(char)) != 0) {
-                    convertDecimalToBinary(inp, p, 8);
-                    i = -1;
-                }
-                else {
-                    break;
-                }
-            }
-        }
-        else {
-            k++;
-            write(fd2, &tree_temp->g, sizeof(char));
-            write(fd2, &tree_temp->g, sizeof(char));
-            write(fd2, &tree_temp->g, sizeof(char));
-            //printf("'%c'\n", tree_temp->g);
-            tree_temp = tree;
-            i--;
-        }
+        //printf("%d \n", count);
     }
 }
 
 
-void freeImage(unsigned char** image, int height) {
-    if (!(image == NULL)) {
-        for (int i = 0; i < height; i++) {
-            free(image[i]); // Free each row
-        }
-        free(image); // Free the array of pointers
-        image = NULL;
-    }
-}
+/*
 
 void freeData(unsigned char** image, int height, MinHeap *heap) {
     freeHuffmanTree(tree);//tree is diclared globally
-    freeHeap(heap);
     freeCodeList(front);//front is diclared globally
     freeImage(image, height);
 }
 
-void closeAllFiles(int file, int fd2, int fd3) {
-    close(file);
-    close(fd2);
-    close(fd3);
+void closeAllFiles(FILE *file, FILE *fd2, FILE *fd3) {
+    fclose(file);
+    fclose(fd2);
+    fclose(fd3);
 }
-    
+*/
