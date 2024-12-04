@@ -1,5 +1,11 @@
 #include "main.h"
 
+/**
+ * run command -> 
+ *      ./a.out c1 <file-path>
+ *      ./a.out d1 ./image-files/compressedRle.txt
+ */
+
 void compressUsingRLE(const char *inputFile, const char *outputFile) {
     FILE *in = fopen(inputFile, "r");
     FILE *out = fopen(outputFile, "w");

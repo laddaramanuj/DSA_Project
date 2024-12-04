@@ -1,11 +1,22 @@
 #include "logic.h"
 
+/**
+ * content of compressed file :
+ *      1)count of 'total' char in input file/image 
+ *          -> need when decompression is needed(otherwise extra added zero in last byte will give some char)
+ *      2)count of 'unique' char in file/image and 'char', 'len, decimal value of binary code'
+ *          -> needed for rebuilt-hauffman-tree for decompression
+ *      3)if it is image, then 'header' 
+ *          -> gives info about width, height, bits per pixel , etc which need not be changed
+ *      4)hauffman code for each char
+ */
 
 int k = 0;
 code *front = NULL, *rear = NULL;
 
 //only changes %c to %d , (unsugned char ) typecasting
 //to print intensity as int
+//it return there are how many unique characters
 int insertInMeanHeap(MinHeap* h, int* freq) {
     int i = 0, count = 0;
     while(i < 256) {
@@ -20,12 +31,19 @@ int insertInMeanHeap(MinHeap* h, int* freq) {
         //printf("%d) %d : %d\n", i, (unsigned char)h->array[i]->ch, h->array[i]->freq);
         i++;
     }
+    //capacity means how many char it can occupy which is 256 here
+    //size means how many index are filled...or unique char in snother words
     printf("capacity : %d, size :  %d\n", h->capacity, h->size);
     return count;
 }
 
 
 // Function to build Huffman Tree
+/**
+ * it extracts 2 nodes with minimum frequncy among available
+ * and add new now with freq equal to sum of that 2, and its left and right points to that 2 nodes
+ * returns root node
+ */
 node* buildHuffmanTree(MinHeap* h){
     node *l, *r, *top;
     while(!isSizeOne(h)) {
@@ -39,6 +57,7 @@ node* buildHuffmanTree(MinHeap* h){
     return extractMin(h);
 }
 
+//function to free hauffman tree
 void freeHuffmanTree(Tree* node) {
     if(node) {
         freeHuffmanTree(node->f); // Free left subtree
@@ -47,17 +66,25 @@ void freeHuffmanTree(Tree* node) {
     }
 }
 
+//it return decimal equivalent of given binary
 int convertBinaryToDecimal(int arr[], int n) {
     int decimal = 0;
     for (int i = 0; i < n; i++) {
+        //multiply decimal by two and perform bitwise or with arr[i]
         decimal = (decimal << 1) | arr[i];
     }
     return decimal;
 }
 
-// Function to print codes into file
+/**
+ * Function to print codes into file recursively
+ * during decompression we need to rebuilt hauffman tree 
+ * so store each 'char', 'len' of its code, 'decimal' equivalent of code
+ */
 void printCodesIntoFile(FILE* fd2, node* root,int t[], int top ) {
-    int i;
+    //top works as len of binary code travesed
+    //'t' holds binary code
+
     if (root->l) {
         t[top] = 0;
         printCodesIntoFile(fd2, root->l, t, top + 1);
@@ -68,36 +95,29 @@ void printCodesIntoFile(FILE* fd2, node* root,int t[], int top ) {
         printCodesIntoFile(fd2, root->r, t, top + 1);
     }
 
+    /**
+     * if it is leaf node then add at the end of the linked-list of code , 
+     * which contains data like : char, len, decimal, next ptr
+     * and also write 'char, len, decimal' in compressed file
+     */
     if (root->l == root->r) {
         code *data = (code*)malloc(sizeof(code));
-        //tree = (Tree*)malloc(sizeof(Tree));
         data->p = NULL;
         data->k = root->ch;
-        //tree->g = root->character;
-        //write(fd2, &root->ch, sizeof(char));
         fwrite(&root->ch, sizeof(char), 1, fd2);
-        //printf("code for '%d' : ", (unsigned char)data->k);
-        for (i = 0; i < top; i++) {
+        for (int i = 0; i < top; i++) {
             data->code_arr[i] = t[i];
-            //printf("%d ", t[i]);
         }
-        //printf("\n");
-        //printf("reached here %d\n", (unsigned char)data->k);
         data->l = top;
-        //char len_str[16]; // Buffer for length
-        //sprintf(len_str, "%d", top); // Format length as string
-        //write(fd2, len_str, strlen(len_str)); // Write length
-        //write(fd2, &data->l, sizeof(int)); // Write length
         fwrite(&data->l, sizeof(int), 1, fd2);
-
-        // Convert the binary code to decimal and write it
-        data->d = convertBinaryToDecimal(t, top); // Compute decimal value from binary
-        //char dec_str[16]; // Buffer for decimal
-        //sprintf(dec_str, "%d", data->d); // Format decimal as string
-        //write(fd2, dec_str, strlen(dec_str)); // Write decimal value
-        //write(fd2, &data->d, sizeof(int)); // Write decimal value
+        
+        data->d = convertBinaryToDecimal(t, top); 
+        
         fwrite(&data->d, sizeof(int), 1, fd2);
-        if (k == 0) {
+
+        //if it is first node to be added update front and rear
+        //'k' i global variable
+        if(k == 0) {
             front = rear = data;
             k++;
         }
@@ -108,7 +128,7 @@ void printCodesIntoFile(FILE* fd2, node* root,int t[], int top ) {
     }
 }
 
-
+//function to free linked-list of codes
 void freeCodeList(code *head) {
     code *temp;
     while (head != NULL) {
@@ -118,8 +138,13 @@ void freeCodeList(code *head) {
     }
 }
 
+/**
+ * in image there is header followed by pixel values
+ * so write header as it is in compressed file , don't compress it
+ * first write how many char are there in header as 2 byte
+ */
 void writeHeader(FILE* fd2, FILE* file, int count) {
-    //write(fd2, &count, 2);
+    
     fwrite(&count, 2, 1, fd2);
     int i = count;
     char ch;
@@ -137,16 +162,23 @@ void writeHeader(FILE* fd2, FILE* file, int count) {
     }
 }
 
-// Function to compress file
+/**
+ * read char from input file, search that char in linked-list of codes
+ * if it founds then take 'required' bits from that code to become '1 byte' and write that byte to compressed file
+ * and still left with some bit of code then make 1 byte of it , 
+ * if bits are over from code of last read char , read new char and continue 
+ * at the end when all char are read, but some bits are remaining from last read char code, fill '0' to become 1 byte and write in file
+ * free the linked-list of codes
+ */
 void compressFile(FILE* fd1, FILE* fd2, unsigned char a) {
     char n;
     int h = 0, i;
-    while (fread(&n, sizeof(char), 1, fd1) != 0) {
+    while(fread(&n, sizeof(char), 1, fd1) != 0) {
         rear = front;
-        while (rear->k != n && rear->p != NULL) {
+        while(rear->k != n && rear->p != NULL) {
             rear = rear->p;
         }
-        if (rear->k == n) {
+        if(rear->k == n) {
             for (i = 0; i < rear->l; i++) {
                 if (h < 7) {
                     if (rear->code_arr[i] == 1) {
@@ -167,7 +199,6 @@ void compressFile(FILE* fd1, FILE* fd2, unsigned char a) {
                     else {
                         h = 0;
                     }
-                    //write(fd2, &a, sizeof(char));
                     fwrite(&a, sizeof(char), 1, fd2);
                     a = 0;
                 }
@@ -177,27 +208,34 @@ void compressFile(FILE* fd1, FILE* fd2, unsigned char a) {
     for (i = 0; i < 7 - h; i++) {
         a = a << 1;
     }
-    //write(fd2, &a, sizeof(char));
     fwrite(&a, sizeof(char), 1, fd2);
     freeCodeList(front);//front is diclared globally
 }
 
+//functioon to convert decimal to binary of 'required' length
 void convertDecimalToBinary(int bin[], int decimal, int length) {
     //printf("len = %d\n", length);
     for (int i = length - 1; i >= 0; i--) {
-        //printf("I am in convert to binary loop\n");
         bin[i] = decimal % 2;
         decimal /= 2;
     }
 }
 
+//function to read char, len, decimal value from compressed file
 void ExtractCodesFromFile(FILE* fd1) {
-    fread(&t->g, sizeof(char), 1, fd1); // Replace read with fread
-    fread(&t->len, sizeof(int), 1, fd1); // Replace read with fread
-    fread(&t->dec, sizeof(int), 1, fd1); // Replace read with fread
+    fread(&t->g, sizeof(char), 1, fd1); 
+    fread(&t->len, sizeof(int), 1, fd1); 
+    fread(&t->dec, sizeof(int), 1, fd1);
 }
 
-// Function to rebuild the Huffman tree
+/**
+ * Function to rebuild the Huffman tree  for 'size' number of unique char
+ * remeber : we have stored char, len, decimal value in compressed file
+ * extract that data from compressed file, get binary code of 'required len' from decimal value and len
+ * traverse that code , if 'dead end found' then add node and continue traversing
+ * when bin_con code is complete, that is leaf node and store char, len, dec int it
+ * and continue for other
+ */
 void ReBuildHuffmanTree(FILE* fd1, int size) {
     int i = 0, j, k;
     int l = 0;
@@ -208,13 +246,9 @@ void ReBuildHuffmanTree(FILE* fd1, int size) {
     t = (Tree*)malloc(sizeof(Tree));
     t->f = NULL;
     t->r = NULL;
-    int m = 0;
     for(k = 0; k < size; k++) {
-        //printf("%d times in for loop\n", m);
-        m++;
         tree_temp = tree;
         ExtractCodesFromFile(fd1);
-        //printf("in rebuilt '%c' : %d, %d\ncode : ", t->g, t->dec, t->len);
         int bin[MAX], bin_con[MAX];
         for (i = 0; i < MAX; i++) {
             bin[i] = bin_con[i] = 0;
@@ -250,18 +284,23 @@ void ReBuildHuffmanTree(FILE* fd1, int size) {
         tree_temp->g = t->g;
         tree_temp->len = t->len;
         tree_temp->dec = t->dec;
-        //printf("in tree leaf node '%c' : %d, %d\n", tree_temp->g, tree_temp->dec, tree_temp->len);
-        //tree_temp->f = NULL;
-        //tree_temp->r = NULL;
         tree_temp = tree;
     }
 }
 
-
-int isroot(Tree* node){
+//to check if give node is leaf-node or not
+int isLeaf(Tree* node){
     return (node->f == NULL && node->r == NULL);
 }
 
+/**
+ * read char from compressed file , convert it to binary code
+ * traverse that binary code in hauffman tree if leaf-node fond write 'char in that leaf-node' in decompressed file
+ * if some bits are still available(from last read byte's code) or even after traversing entire 8bit code leaf node not found then read another byte
+ * and continue traversinng 
+ * here,
+ *      f -> total char in input file
+ */
 void decompressFile(FILE* fd1, FILE* fd2, int f) {
     int inp[8], i, k = 0;
     unsigned char p;
@@ -269,7 +308,7 @@ void decompressFile(FILE* fd1, FILE* fd2, int f) {
     convertDecimalToBinary(inp, p, 8);
     tree_temp = tree;
     for (i = 0; i < 8 && k < f; i++) {
-        if(!isroot(tree_temp)) {
+        if(!isLeaf(tree_temp)) {
             if (i != 7) {
                 if (inp[i] == 0) {
                     tree_temp = tree_temp->f;
@@ -296,21 +335,20 @@ void decompressFile(FILE* fd1, FILE* fd2, int f) {
         }
         else {
             k++;
-            //write(fd2, &tree_temp->g, sizeof(char));
             fwrite(&tree_temp->g, sizeof(char), 1, fd2);
-            //printf("Decompressed character: '%c' (ASCII: %d)\n", tree_temp->g, tree_temp->g);
-            //printf("'%c'\n", tree_temp->g);
             tree_temp = tree;
             i--;
         }
     }
 }
 
+/**
+ * remember for image, we have written header in compressed file
+ * read that from it and write as it is in decompressed file
+ */
 void writingHeader(FILE* fd3, FILE* fd2) {
     int count;
-    //printf("%d\n", sizeof(short));
     char ch;
-    //read(fd2, &count, 2);
     int bytesRead = fread(&count, sizeof(short), 1, fd2);
     if (bytesRead != 1) {
         printf("Error reading count or unexpected EOF\n");
@@ -318,9 +356,7 @@ void writingHeader(FILE* fd3, FILE* fd2) {
     }
     printf("count : %d\n", count);
     while(count--) {
-        //printf("%d ", count);
         int bytesRead = fread(&ch, sizeof(char), 1, fd2);
-        //printf("reached here\n");
         if (bytesRead != 1) {
             printf("Error reading count or unexpected EOF\n");
             return;
@@ -332,22 +368,6 @@ void writingHeader(FILE* fd3, FILE* fd2) {
             printf("Error writing to fd3\n");
             return;
         }
-        //printf("%d \n", count);
     }
 }
 
-
-/*
-
-void freeData(unsigned char** image, int height, MinHeap *heap) {
-    freeHuffmanTree(tree);//tree is diclared globally
-    freeCodeList(front);//front is diclared globally
-    freeImage(image, height);
-}
-
-void closeAllFiles(FILE *file, FILE *fd2, FILE *fd3) {
-    fclose(file);
-    fclose(fd2);
-    fclose(fd3);
-}
-*/

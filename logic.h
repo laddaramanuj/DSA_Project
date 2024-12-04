@@ -2,6 +2,7 @@
 
 #define MAX 32 
 
+//structure for node in hauffman tree
 typedef struct Tree {
     char g;
     int len;
@@ -10,7 +11,7 @@ typedef struct Tree {
     struct Tree* r;
 } Tree;
 
-
+//it is structure for node in linked-list
 typedef struct code {
     char k;
     int l;
@@ -33,6 +34,6 @@ void compressFile(FILE* fd1, FILE* fd2, unsigned char a);
 void convertDecimalToBinary(int bin[], int decimal, int length);
 void ExtractCodesFromFile(FILE* fd1);//for image compression only
 void ReBuildHuffmanTree(FILE* fd1, int size);
-int isroot(Tree* node);
+int isLeaf(Tree* node);
 void decompressFile(FILE* fd1, FILE* fd2, int f);
 void writingHeader(FILE* fd3, FILE* fd2);

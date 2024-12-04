@@ -1,6 +1,11 @@
 #include "logic.h"
-//run command -> 
-//gcc text.c minHeap.c logic.c
+
+/**
+ * run command -> 
+ *      ./a.out c2 <file-path>
+ *      ./a.out d2 ./image-files/compressedHauffText.txt
+ */
+
 
 void compressUsingHauffText(char *inputFile, char *outputFile) {
 

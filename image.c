@@ -1,5 +1,11 @@
 #include "logic.h"
 
+/**
+ * run command -> 
+ *      ./a.out c3 <file-path>
+ *      ./a.out d3 ./image-files/compressedHauffImage.bin
+ */
+
 void compressingHauffImage(char *inputFile, char *outputFile) {
     MinHeap *heap = createMinHeap(256);
     int offset,hbytes,width,height;
