@@ -43,6 +43,11 @@ int insertInMeanHeap(MinHeap* h, int* freq) {
  * it extracts 2 nodes with minimum frequncy among available
  * and add new now with freq equal to sum of that 2, and its left and right points to that 2 nodes
  * returns root node
+ * 
+ * time complexity ->
+ *      For n−1 iterations, each involving an extract and insert operation
+ *      O(nlogn)
+ *      n is the number of the unique characters in the input
  */
 node* buildHuffmanTree(MinHeap* h){
     node *l, *r, *top;
@@ -66,7 +71,9 @@ void freeHuffmanTree(Tree* node) {
     }
 }
 
+
 //it return decimal equivalent of given binary
+//time complexity -> O(n)
 int convertBinaryToDecimal(int arr[], int n) {
     int decimal = 0;
     for (int i = 0; i < n; i++) {
@@ -80,6 +87,11 @@ int convertBinaryToDecimal(int arr[], int n) {
  * Function to print codes into file recursively
  * during decompression we need to rebuilt hauffman tree 
  * so store each 'char', 'len' of its code, 'decimal' equivalent of code
+ * 
+ * time complexity ->
+ *      O(n⋅logn)
+ *      where n is total unique char 
+ *      For each leaf node, the time complexity is O(logn) due to the binary-to-decimal conversion.
  */
 void printCodesIntoFile(FILE* fd2, node* root,int t[], int top ) {
     //top works as len of binary code travesed
@@ -169,6 +181,10 @@ void writeHeader(FILE* fd2, FILE* file, int count) {
  * if bits are over from code of last read char , read new char and continue 
  * at the end when all char are read, but some bits are remaining from last read char code, fill '0' to become 1 byte and write in file
  * free the linked-list of codes
+ * 
+ * time complexity ->
+ *      O(N⋅M)
+ *      for 'N' iterations (reading char from file), & in each traversing linked-list of 'M' nodes
  */
 void compressFile(FILE* fd1, FILE* fd2, unsigned char a) {
     char n;
@@ -212,7 +228,9 @@ void compressFile(FILE* fd1, FILE* fd2, unsigned char a) {
     freeCodeList(front);//front is diclared globally
 }
 
+
 //functioon to convert decimal to binary of 'required' length
+//time complexity -> O(length)
 void convertDecimalToBinary(int bin[], int decimal, int length) {
     //printf("len = %d\n", length);
     for (int i = length - 1; i >= 0; i--) {
@@ -235,6 +253,10 @@ void ExtractCodesFromFile(FILE* fd1) {
  * traverse that code , if 'dead end found' then add node and continue traversing
  * when bin_con code is complete, that is leaf node and store char, len, dec int it
  * and continue for other
+ * 
+ * time complexity->
+ *      O(C)
+ *      where 'c' is the 'sum of len 'of binary codes of all unique char
  */
 void ReBuildHuffmanTree(FILE* fd1, int size) {
     int i = 0, j, k;
@@ -298,8 +320,14 @@ int isLeaf(Tree* node){
  * traverse that binary code in hauffman tree if leaf-node fond write 'char in that leaf-node' in decompressed file
  * if some bits are still available(from last read byte's code) or even after traversing entire 8bit code leaf node not found then read another byte
  * and continue traversinng 
- * here,
- *      f -> total char in input file
+ * here, f -> total char in input file
+ * 
+ * time complexity ->
+ *      O(M⋅logN)
+ *      M is the total number of characters  in the compressed file 
+ *      logN represents the height of the Huffman tree or len of that char's code
+ * 
+ *      OR O(N) where N is the number of the bits in the encoded message
  */
 void decompressFile(FILE* fd1, FILE* fd2, int f) {
     int inp[8], i, k = 0;
