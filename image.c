@@ -66,7 +66,6 @@ void compressingHauffImage(char *inputFile, char *outputFile) {
     
     char buffer;
     int freq[256] = {0};
-    int i = 0;
     int total = 0;
 
     while(fread(&buffer, 1, 1, file) > 0) {

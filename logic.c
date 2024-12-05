@@ -260,7 +260,6 @@ void ExtractCodesFromFile(FILE* fd1) {
  */
 void ReBuildHuffmanTree(FILE* fd1, int size) {
     int i = 0, j, k;
-    int l = 0;
     tree = (Tree*)malloc(sizeof(Tree));
     tree_temp = tree;
     tree->f = NULL;
