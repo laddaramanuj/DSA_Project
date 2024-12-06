@@ -12,7 +12,7 @@ void compressingHauffImage(char *inputFile, char *outputFile) {
     long bmpsize=0,bmpdataoff=0,bpp=0;
     char id[2];
 
-    FILE *file = fopen(inputFile, "rb");
+    FILE *file = fopen(inputFile, "r");
     if (file == NULL) {
         perror("Error opening file");
         return;
@@ -60,9 +60,6 @@ void compressingHauffImage(char *inputFile, char *outputFile) {
 
     //8 -> now we will read 
     fseek(file, bmpdataoff, SEEK_SET);
-    
-    int numbytes = (bmpsize - bmpdataoff)/3;
-    printf("Number of bytes except header: %d \n\n",numbytes);
     
     char buffer;
     int freq[256] = {0};

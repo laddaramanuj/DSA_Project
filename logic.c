@@ -309,6 +309,39 @@ void ReBuildHuffmanTree(FILE* fd1, int size) {
     }
 }
 
+
+
+/**
+ * remember for image, we have written header in compressed file
+ * read that from it and write as it is in decompressed file
+ */
+void writingHeader(FILE* fd3, FILE* fd2) {
+    int count;
+    char ch;
+    int bytesRead = fread(&count, sizeof(short), 1, fd2);
+    if (bytesRead != 1) {
+        printf("Error reading count or unexpected EOF\n");
+        return;
+    }
+    printf("count : %d\n", count);
+    while(count--) {
+        int bytesRead = fread(&ch, sizeof(char), 1, fd2);
+        if (bytesRead != 1) {
+            printf("Error reading count or unexpected EOF\n");
+            return;
+        }else if (bytesRead == 0) {
+            printf("end of file\n");
+            return;
+        }
+        if (fwrite(&ch, sizeof(char), 1, fd3) != 1) {
+            printf("Error writing to fd3\n");
+            return;
+        }
+    }
+}
+
+
+
 //to check if give node is leaf-node or not
 int isLeaf(Tree* node){
     return (node->f == NULL && node->r == NULL);
@@ -368,33 +401,3 @@ void decompressFile(FILE* fd1, FILE* fd2, int f) {
         }
     }
 }
-
-/**
- * remember for image, we have written header in compressed file
- * read that from it and write as it is in decompressed file
- */
-void writingHeader(FILE* fd3, FILE* fd2) {
-    int count;
-    char ch;
-    int bytesRead = fread(&count, sizeof(short), 1, fd2);
-    if (bytesRead != 1) {
-        printf("Error reading count or unexpected EOF\n");
-        return;
-    }
-    printf("count : %d\n", count);
-    while(count--) {
-        int bytesRead = fread(&ch, sizeof(char), 1, fd2);
-        if (bytesRead != 1) {
-            printf("Error reading count or unexpected EOF\n");
-            return;
-        }else if (bytesRead == 0) {
-            printf("end of file\n");
-            return;
-        }
-        if (fwrite(&ch, sizeof(char), 1, fd3) != 1) {
-            printf("Error writing to fd3\n");
-            return;
-        }
-    }
-}
-
